@@ -21,35 +21,22 @@ udp.county <- udp %>%
     )
 
 
-caaspp.county <- tbl(con, "CAASPP") %>% 
+caaspp.county <- caaspp.ca %>% 
     filter(type_id == 5,
-           subgroup_id == 1,
+           student_group_id == 1,
            grade == 13,
         # County_Code == "27",
            # DistrictCode == "10272",
            test_year >= yr.curr) %>%
-    collect() %>%
-    mutate(subgroup_id = as.character(subgroup_id)) %>%
-    left_join_codebook("CAASPP", "subgroup_id") %>%
-    rename(subgroup = definition) %>%
-    left_join(ent , by = join_by(county_code, district_code, type_id,
-                                school_code )
-              ) %>%
-    mutate(type_id = as.character(type_id)) %>%
-    left_join_codebook("CAASPP", "type_id") %>%
-    rename(entity_type = definition) %>%
-
-    mutate(across(caaspp_reported_enrollment:area_4_percentage_near_standard, as.numeric)) %>%
-    bind_rows(cast %>% filter(test_year == yr.curr, type_id == 5,
-                              subgroup_id == 1,
-                              grade == 13)) %>%
-    select(county_name = county_name, percentage_standard_met_and_above, test_id) %>%
+  clean.caaspp() %>%
+  select(county_name = county_name, percentage_standard_met_and_above, test_id) %>%
     pivot_wider(id_cols = county_name,
                 names_from = test_id,
                 values_from = percentage_standard_met_and_above) %>%
     rename(ELA = `1`,
            Math = `2`,
-           Science = `17`) %>%
+        #   Science = `17`
+           ) %>%
     left_join(udp.county) %>%
     arrange(desc(Math)) %>%
     mutate(Rank = row_number())
@@ -86,16 +73,19 @@ ggsave(here("figs", paste0("CAASPP ELA Rates Meeting or Exceeding for Central Co
 
 caaspp.county %>%
     filter(el.perc > 20,
-           frpm.perc > 70)
+           frpm.perc > 75) #70
 
 
 #### Top ten FRPM and EL 
 
+all.list <- "a|e|i|o"
 central.list <- "Cruz|Benito|Monterey|Luis|Barb|Vent"
-frpm.list <- "Colu|Fres|Imperi|Kern|Madera|Merced|Mont|Tular|Kings|Glen"
-el.list <- "Colu|Imperi|Madera|Merced|Mono|Mont|Franc|Barb|Stan|Napa"
-both.list <-  "Colu|Imperi|Madera|Merced|Mont"  # Tulare 
+frpm.list <- "Colu|Fres|Imperi|Kern|Madera|Merced|Mont|Tular|Mendo"
+el.list <- "Colu|Imperi|Mono|Mont|Franc|Barb|Stan|Sacra"
+both.list <-  "Colu|Imperi|Mont"  # Tulare 
 list.20.70 <-  "Colu|Imperi|Madera|Merced|Mont|Tular|Stan"  # Tulare 
+list.20.75 <-  "Colu|Imperi|Madera|Merced|Mont|Tular"  # Tulare 
+
 
 library(googlesheets4)
 write_sheet(central.coast, "https://docs.google.com/spreadsheets/d/1XVyzdcgWEm-KU-_JElUefGeCmNGqzMfw2JaQP1-IRLI/edit#gid=0" )
@@ -149,8 +139,8 @@ caaspp.county %>%
             axis.text.y = element_markdown()
         )
 
-  ggsave(here("figs","county", paste0("CAASPP ", deparse(substitute(ass))," Rates Meeting or Exceeding Standards ",desc,  Sys.Date(),".png" )),
-         width = 8, height = 4.5)
+  # ggsave(here("figs","county", paste0("CAASPP ", deparse(substitute(ass))," Rates Meeting or Exceeding Standards ",desc,  Sys.Date(),".png" )),
+  #        width = 8, height = 4.5)
 }
 
 
@@ -201,52 +191,61 @@ comp.counties.chronic <- function(list,  kular, desc) {
 
 
 
+comp.counties.graph(list = all.list,
+                    ass = Math,
+                    "pink",
+                    "All Counties")
+
+ggsave(here("figs","county", paste0("CAASPP ", "Math"," Rates Meeting or Exceeding Standards ", "All Counties",  Sys.Date(),".png" )),
+       width = 8, height = 8)
+
+
 comp.counties.graph(list = el.list,
                     ass = ELA,
                     "seagreen",
-                    "Top Ten Counties with EL Students")
+                    "Top Eight Counties with EL Students")
 
 
 comp.counties.graph(list = frpm.list,
                     ass = ELA,
                     "seagreen",
-                    "Top Ten Counties with FRPM Students")
+                    "Top Nine Counties with FRPM Students")
 
 
 comp.counties.graph(list = both.list,
                     ass = ELA,
                     "seagreen",
-                    "Five Counties with most FRPM and EL Students")
+                    "Three Counties with most FRPM and EL Students")
 
 comp.counties.graph(list = list.20.70,
                     ass = ELA,
                     "seagreen",
-                    "Counties with >70% FRPM and >20% EL Students")
+                    "Counties with >70 percent FRPM and >20 percent EL Students")
 
 
 
 comp.counties.graph(list = el.list,
                     ass = Math,
                     "violetred",
-                    "Top Ten Counties with EL Students")
+                    "Top Eight Counties with EL Students")
 
 
 comp.counties.graph(list = frpm.list,
                     ass = Math,
                     "violetred",
-                    "Top Ten Counties with FRPM Students")
+                    "Top Nine Counties with FRPM Students")
 
 
 comp.counties.graph(list = both.list,
                     ass = Math,
                     "violetred",
-                    "Five Counties with most FRPM and EL Students")
+                    "Three Counties with most FRPM and EL Students")
 
 
 comp.counties.graph(list = list.20.70,
                     ass = Math,
                     "violetred",
-                    "Counties with >70% FRPM and >20% EL Students")
+                    "Counties with >70 percent FRPM and >20 percent EL Students")
 
 
 
@@ -254,66 +253,59 @@ comp.counties.graph(list = list.20.70,
 comp.counties.graph(list = el.list,
                     ass = Science,
                     "goldenrod",
-                    "Top Ten Counties with EL Students")
+                    "Top Eight Counties with EL Students")
 
 
 comp.counties.graph(list = frpm.list,
                     ass = Science,
                     "goldenrod",
-                    "Top Ten Counties with FRPM Students")
+                    "Top Nine Counties with FRPM Students")
 
 
 comp.counties.graph(list = both.list,
                     ass = Science,
                     "goldenrod",
-                    "Five Counties with most FRPM and EL Students")
+                    "Three Counties with most FRPM and EL Students")
 
 
 comp.counties.graph(list = list.20.70,
                     ass = Science,
                     "goldenrod",
-                    "Counties with >70% FRPM and >20% EL Students")
+                    "Counties with >70 percent FRPM and >20 percent EL Students")
 
 
 
 comp.counties.chronic(list = el.list,
                     "goldenrod",
-                    "Top Ten Counties with EL Students")
+                    "Top Eight Counties with EL Students")
 
 
 comp.counties.chronic(list = frpm.list,
                     "goldenrod",
-                    "Top Ten Counties with FRPM Students")
+                    "Top Nine Counties with FRPM Students")
 
 
 comp.counties.chronic(list = both.list,
                     "goldenrod",
-                    "Five Counties with most FRPM and EL Students")
+                    "Three Counties with most FRPM and EL Students")
 
 
 comp.counties.chronic(list = list.20.70,
                       "goldenrod",
-                      "Counties with >70% FRPM and >20% EL Students")
+                      "Counties with >70 percent FRPM and >20 percent EL Students")
 
 ####
-
-udp.county %>%
-    filter(el.perc >= 20,
-           frpm.perc >= 70)
-    
-    
-    
     
     caaspp.county <- tbl(con, "CAASPP") %>% 
     filter(Type_ID == 5,
-           Subgroup_ID == 1,
+           student_group_id == 1,
            Grade == 13,
            # County_Code == "27",
            # DistrictCode == "10272",
            Test_Year >= yr.curr) %>%
     collect() %>%
-    mutate(Subgroup_ID = as.character(Subgroup_ID)) %>%
-    left_join_codebook("CAASPP", "Subgroup_ID") %>%
+    mutate(student_group_id = as.character(student_group_id)) %>%
+    left_join_codebook("CAASPP", "student_group_id") %>%
     rename(Subgroup = definition) %>%
     left_join(ent , by = join_by(County_Code, District_Code, Type_ID,
                                  School_Code )

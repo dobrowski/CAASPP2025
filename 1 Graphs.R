@@ -19,9 +19,13 @@ county.graph <- function(df = caaspp.mry, test.id, kular = "steel blue", grd = 1
                              17 ~ "Science",
            )
     
+    grd.name <- if_else(grd == 13, "", paste0(" - Grade ",grd))
+    
+    
+    
     df %>%
         filter(grade == grd,
-               subgroup_id == "1",
+               student_group_id == "1",
                test_id == test.id, # ELA 
                entity_type == "District",
                !is.na(percentage_standard_met_and_above)
@@ -32,7 +36,7 @@ county.graph <- function(df = caaspp.mry, test.id, kular = "steel blue", grd = 1
         labs(x = "",
              y = "",
              color ="",
-             title = paste0("CAASPP ", yr.curr ," ", test.name, " - "  ,"Grade ",grd),
+             title = paste0("CAASPP ", yr.curr ," ", test.name, grd.name),
              subtitle = "Rates Meeting or Exceeding Standards by District",
              caption = source.link
              ) 
@@ -46,12 +50,12 @@ county.graph <- function(df = caaspp.mry, test.id, kular = "steel blue", grd = 1
 }
 
 
-county.graph(caaspp.mry, 1, "steel blue")
+county.graph(caaspp.mry, 1, "lightskyblue1")
 
-county.graph(caaspp.mry, 2, "steel blue")
+county.graph(caaspp.mry, 2, "lightskyblue1")
 
 
-
+# loop for middle grades 
 for (j in 4:6) {
     for (i in 1:2) {
         
@@ -81,6 +85,8 @@ cast.imp %>%
 county.graph(17, "limegreen")
 
 
+# Sorts in Alphabetical Order 
+
 county.alpha <- function(df = caaspp.mry, test.id, colorme) {
     
     test.name <-  case_match(test.id, 1 ~ "ELA",
@@ -90,7 +96,7 @@ county.alpha <- function(df = caaspp.mry, test.id, colorme) {
     
     df %>%
         filter(grade == 13,
-               subgroup_id == "1",
+               student_group_id == "1",
                test_id == test.id, # ELA 
                entity_type == "District",
                !is.na(percentage_standard_met_and_above)
@@ -135,62 +141,62 @@ cast.mry %>%
     filter(test_year == 2024) %>%
     county.alpha( 17, colorme = "lightgreen")
 
-
-
-#  11th Grade ELA 
-
-caaspp.mry %>%
-    filter(Grade == 11,
-           Subgroup_ID == "1",
-           Test_Id == 1, # ELA 
-           Entity_Type == "School",
-           !is.na(Percentage_Standard_Met_and_Above)
-           )%>%
-    lollipop(Percentage_Standard_Met_and_Above,
-             School_Name,
-             "sea green") +
-    labs(x = "",
-         y = "",
-         color ="",
-         title = ("CAASPP ELA Rates Meeting or Exceeding by 11th grade"),
-         caption = source.link
-    ) 
-
-ggsave(here("figs", paste0("All Districts 11th grade ELA Rates Meeting or Exceeding",  Sys.Date(),".png" )),
-       width = 8, height = 6)
-
-# Student Groups at Salinas Union
-
-caaspp.mry %>%
-    filter(Grade == 13,
-           str_detect(District_Name,"Salinas Union"),
-          # Subgroup_ID == "1",
-           Test_Id == 1, # ELA 
-           Entity_Type == "District",
-           !is.na(Percentage_Standard_Met_and_Above),
-          !str_detect(Subgroup, " - ")
-    ) %>%
-    lollipop(Percentage_Standard_Met_and_Above,
-             Subgroup,
-             "sea green") +
-    labs(x = "",
-         y = "",
-         color ="",
-         title = ("CAASPP ELA Rates Meeting or Exceeding at Salinas Union by Student Group"),
-         caption = source.link
-    ) 
-
-ggsave(here("figs", paste0("CAASPP ELA Rates Meeting or Exceeding at Salinas Union by Student Group",  Sys.Date(),".png" )),
-       width = 8, height = 6)
-
-
-
+# 
+# 
+# #  11th Grade ELA 
+# 
+# caaspp.mry %>%
+#     filter(Grade == 11,
+#            student_group_id == "1",
+#            Test_Id == 1, # ELA 
+#            Entity_Type == "School",
+#            !is.na(Percentage_Standard_Met_and_Above)
+#            )%>%
+#     lollipop(Percentage_Standard_Met_and_Above,
+#              School_Name,
+#              "sea green") +
+#     labs(x = "",
+#          y = "",
+#          color ="",
+#          title = ("CAASPP ELA Rates Meeting or Exceeding by 11th grade"),
+#          caption = source.link
+#     ) 
+# 
+# ggsave(here("figs", paste0("All Districts 11th grade ELA Rates Meeting or Exceeding",  Sys.Date(),".png" )),
+#        width = 8, height = 6)
+# 
+# # Student Groups at Salinas Union
+# 
+# caaspp.mry %>%
+#     filter(Grade == 13,
+#            str_detect(District_Name,"Salinas Union"),
+#           # student_group_id == "1",
+#            Test_Id == 1, # ELA 
+#            Entity_Type == "District",
+#            !is.na(Percentage_Standard_Met_and_Above),
+#           !str_detect(Subgroup, " - ")
+#     ) %>%
+#     lollipop(Percentage_Standard_Met_and_Above,
+#              Subgroup,
+#              "sea green") +
+#     labs(x = "",
+#          y = "",
+#          color ="",
+#          title = ("CAASPP ELA Rates Meeting or Exceeding at Salinas Union by Student Group"),
+#          caption = source.link
+#     ) 
+# 
+# ggsave(here("figs", paste0("CAASPP ELA Rates Meeting or Exceeding at Salinas Union by Student Group",  Sys.Date(),".png" )),
+#        width = 8, height = 6)
+# 
+# 
+# 
 
 caaspp.mry %>%
     filter(Grade == 13,
            is.na(District_Name),
-           # Subgroup_ID == "1",
-           Test_Id == 1, # ELA 
+           # student_group_id == "1",
+           Test_Id == 1, # ELA
      #      Entity_Type == "District",
            !is.na(Percentage_Standard_Met_and_Above),
            !str_detect(Subgroup, " - ")
@@ -203,7 +209,7 @@ caaspp.mry %>%
          color ="",
          title = paste0("Monterey County ", "ELA" ," Rates Meeting or Exceeding Standards by Student Group"),
          caption = source.link
-    ) 
+    )
 
 ggsave(here("figs", paste0("Monterey County ", "ELA" ," Rates Meeting or Exceeding by Student Group",  Sys.Date(),".png" )),
        width = 8, height = 6)
@@ -222,15 +228,15 @@ lolli.subgroups <- function(df = caaspp.mry ,dist = "", test.id = 1) {
 df %>%
     filter(grade == 13,
            str_detect(district_name,dist),
-           subgroup_id %in% standard.groups,
+           student_group_id %in% standard.groups,
 
-           # Subgroup_ID == "1",
+           # student_group_id == "1",
            test_id == test.id, # ELA 
            entity_type == "District",
            !is.na(percentage_standard_met_and_above),
-           !str_detect(subgroup, " - ")
+           !str_detect(student_group, " - ")
     ) %>%
-    mutate(subgroup.n = paste0(subgroup," (",students_tested,")" )) %>%
+    mutate(subgroup.n = paste0(student_group," (",total_students_tested_with_scores,")" )) %>%
     lollipop(percentage_standard_met_and_above,
              subgroup.n,
              "sea green") + 
@@ -259,12 +265,14 @@ lolli.subgroups("South Monterey County", 17)
 
 districts<- c("Greenfield Union", "South Monterey County")
 
+districts<- caaspp.mry$district_name %>% unique()
+
 test.list <- c(1,2,17)
 
 for (i in test.list) {
     for (j in districts) {
         
-        lolli.subgroups(caaspp.cast.mry, j, 17)
+        lolli.subgroups(caaspp.mry, j, i)
         
     }
     
@@ -272,94 +280,30 @@ for (i in test.list) {
 }
 
 
-
-## standards group list ----
-
-standard.groups <- c(
-1	,	#	All Students	,	All Students	,
-128	,	#	Disability Status	,	Reported disabilities	,
-# 99	,	#	Disability Status	,	No reported disabilities	,
-31	,	#	Economic Status	,	Socioeconomically disadvantaged	,
-# 111	,	#	Economic Status	,	Not socioeconomically disadvantaged	,
-# 6	,	#	English-Language Fluency	,	IFEP, RFEP, and EO (Fluent English proficient and English only)	,
-# 7	,	#	English-Language Fluency	,	IFEP (Initial fluent English proficient)	,
- 8	,	#	English-Language Fluency	,	RFEP (Reclassified fluent English proficient)	,
-# 120	,	#	English-Language Fluency	,	ELs enrolled less than 12 months	,
-# 142	,	#	English-Language Fluency	,	ELs enrolled 12 months or more	,
-160	,	#	English-Language Fluency	,	EL (English learner)	,
-# 243	,	#	English-Language Fluency	,	ADEL (Adult English learner)	,
-180	,	#	English-Language Fluency	,	EO (English only)	,
-# 170	,	#	English-Language Fluency	,	Ever–EL	,
-250	,	#	English-Language Fluency	,	LTEL (Long-Term English learner)	,
-# 251	,	#	English-Language Fluency	,	AR–LTEL (At-Risk of becoming LTEL)	,
-# 252	,	#	English-Language Fluency	,	Never–EL	,
-# 190	,	#	English-Language Fluency	,	TBD (To be determined)	,
-75	,	#	Race and Ethnicity	,	American Indian or Alaska Native	,
-76	,	#	Race and Ethnicity	,	Asian	,
-74	,	#	Race and Ethnicity	,	Black or African American	,
-77	,	#	Race and Ethnicity	,	Filipino	,
-78	,	#	Race and Ethnicity	,	Hispanic or Latino	,
-79	,	#	Race and Ethnicity	,	Native Hawaiian or Pacific Islander	,
-80	,	#	Race and Ethnicity	,	White	,
-144	,	#	Race and Ethnicity	,	Two or more races	,
-# 201	,	#	Ethnicity for Economically Disadvantaged	,	American Indian or Alaska Native	,
-# 202	,	#	Ethnicity for Economically Disadvantaged	,	Asian	,
-# 200	,	#	Ethnicity for Economically Disadvantaged	,	Black or African American	,
-# 203	,	#	Ethnicity for Economically Disadvantaged	,	Filipino	,
-# 204	,	#	Ethnicity for Economically Disadvantaged	,	Hispanic or Latino	,
-# 205	,	#	Ethnicity for Economically Disadvantaged	,	Native Hawaiian or Pacific Islander	,
-# 206	,	#	Ethnicity for Economically Disadvantaged	,	White	,
-# 207	,	#	Ethnicity for Economically Disadvantaged	,	Two or more races	,
-# 221	,	#	Ethnicity for Not Economically Disadvantaged	,	American Indian or Alaska Native	,
-# 222	,	#	Ethnicity for Not Economically Disadvantaged	,	Asian	,
-# 220	,	#	Ethnicity for Not Economically Disadvantaged	,	Black or African American	,
-# 223	,	#	Ethnicity for Not Economically Disadvantaged	,	Filipino	,
-# 224	,	#	Ethnicity for Not Economically Disadvantaged	,	Hispanic or Latino	,
-# 225	,	#	Ethnicity for Not Economically Disadvantaged	,	Native Hawaiian or Pacific Islander	,
-# 226	,	#	Ethnicity for Not Economically Disadvantaged	,	White	,
-# 227	,	#	Ethnicity for Not Economically Disadvantaged	,	Two or more races	,
-# 4	,	#	Gender	,	Female	,
-# 3	,	#	Gender	,	Male	,
-# 28	,	#	Migrant	,	Migrant education	,
-# 29	,	#	Migrant	,	Not migrant education	,
-# 90	,	#	Parent Education	,	Not a high school graduate	,
-# 91	,	#	Parent Education	,	High school graduate	,
-# 92	,	#	Parent Education	,	Some college (includes AA degree)	,
-# 93	,	#	Parent Education	,	College graduate	,
-# 94	,	#	Parent Education	,	Graduate school/Postgraduate	,
-# 121	,	#	Parent Education	,	Declined to state	,
-# 50	,	#	Military Status	,	Armed forces family member	,
-# 51	,	#	Military Status	,	Not armed forces family member	,
-52	,	#	Homeless Status	,	Homeless	,
-# 53	,	#	Homeless Status	,	Not homeless	,
-240		#	Foster Status	,	Foster youth	,
-# 241		#	Foster Status	,	Not foster youth	,
-)
-
 ### Subgroups countywide ------
 
-caaspp.mry %>%
-    filter(grade == 13,
-           is.na(district_name),
-        
-           subgroup_id %in% standard.groups,
-           test_id == 1, # ELA 
- #          Entity_Type == "District",
-           !is.na(percentage_standard_met_and_above),
-           !str_detect(subgroup, " - ")
-    ) %>%
-    lollipop(percentage_standard_met_and_above,
-             subgroup,
-             "orange") +
-    labs(x = "",
-         y = "",
-         color ="",
-         title = paste0("CAASPP ", "ELA" ," Rates Meeting or Exceeding Standards \n Monterey County by Student Group"),
-         caption = source.link
-    ) 
-
-ggsave(here("figs", paste0("Monterey County ", "ELA" ,  " Rates by Student Group ",  Sys.Date(),".png" )),
-       width = 8, height = 4.5)
+# caaspp.mry %>%
+#     filter(grade == 13,
+#            is.na(district_name),
+#         
+#            student_group_id %in% standard.groups,
+#            test_id == 2, # ELA 
+#  #          Entity_Type == "District",
+#            !is.na(percentage_standard_met_and_above),
+#            !str_detect(student_group, " - ")
+#     ) %>%
+#     lollipop(percentage_standard_met_and_above,
+#              student_group,
+#              "orange") +
+#     labs(x = "",
+#          y = "",
+#          color ="",
+#          title = paste0("CAASPP ", "Math ", yr.curr , " Rates Meeting or Exceeding Standards \n Monterey County by Student Group "),
+#          caption = source.link
+#     ) 
+# 
+# ggsave(here("figs", paste0("Monterey County ", "Math" ,  " Rates by Student Group ",  Sys.Date(),".png" )),
+#        width = 8, height = 4.5)
 
 
 
@@ -377,19 +321,19 @@ lolli.subgroups.county <- function(df, testy, kular, tit) {
         filter(#grade == 13,
                #is.na(district_name),
                
-               subgroup_id %in% standard.groups,
+               student_group_id %in% standard.groups,
                test_id == testy, # ELA 
                #          Entity_Type == "District",
                !is.na(percentage_standard_met_and_above),
            #    !str_detect(subgroup, " - ")
         ) %>%
         lollipop(percentage_standard_met_and_above,
-                 subgroup,
+                 student_group,
                  kular) +
         labs(x = "",
              y = "",
              color ="",
-             title = paste0("CAASPP ", test.name ," Rates Meeting or Exceeding Standards \n", tit," by Student Group"),
+             title = paste0("CAASPP ", test.name ," ", yr.curr ," Rates Meeting or Exceeding Standards \n", tit," by Student Group"),
              caption = source.link
         ) 
     
@@ -401,10 +345,28 @@ lolli.subgroups.county <- function(df, testy, kular, tit) {
 }
 
 
+
+caaspp.mry %>%
+  filter(grade == 13, 
+         is.na(district_name) 
+         ) %>%
+  lolli.subgroups.county(2,"orange", "Monterey County")
+
+
+
+
+
 caaspp.cast.mry %>%
     filter(grade == 13, is.na(district_name) ) %>%
     lolli.subgroups.county(17,"orange", "Monterey County")
            
+
+
+
+
+
+
+
 # do imperial as comp
 
 
@@ -414,8 +376,8 @@ caaspp.imp <- tbl(con, "CAASPP") %>%
            # DistrictCode == "10272",
            test_year >= yr.curr) %>%
     collect() %>%
-    mutate(subgroup_id = as.character(subgroup_id)) %>%
-    left_join_codebook("CAASPP", "subgroup_id") %>%
+    mutate(student_group_id = as.character(student_group_id)) %>%
+    left_join_codebook("CAASPP", "student_group_id") %>%
     rename(subgroup = definition) %>%
     left_join(ent2) %>%
     mutate(type_id = as.character(type_id)) %>%
@@ -454,15 +416,15 @@ lolli.subgroups.school <- function(df = caaspp.mry, dist = "", schoo = "", test.
         filter(grade == 13,
                str_detect(district_name,dist),
                str_detect(school_name,schoo),
-               subgroup_id %in% standard.groups,
-               # Subgroup_ID == "1",
+               student_group_id %in% standard.groups,
+               # student_group_id == "1",
                test_id == test.id, # ELA 
                entity_type == "School",
                !is.na(percentage_standard_met_and_above),
                !str_detect(subgroup, " - "),
                !str_detect(subgroup, "Declined")
         ) %>%
-        mutate(subgroup.n = paste0(subgroup," (",students_tested,")" )) %>%
+        mutate(subgroup.n = paste0(subgroup," (",total_students_tested_with_scores,")" )) %>%
         lollipop(percentage_standard_met_and_above,
                  subgroup.n,
                  kular) + 
@@ -540,7 +502,7 @@ caaspp.mry %>%
            str_detect(District_Name,"South Monterey County"),
            str_detect(School_Name,"King City"),
            
-            Subgroup_ID %in% c("1","128", "160") ,
+            student_group_id %in% c("1","128", "160") ,
            Test_Id == 2, # ELA 
            Entity_Type == "School",
            !is.na(Percentage_Standard_Met_and_Above),
@@ -598,18 +560,18 @@ lolli.subgroups.charter <- function(df, schoo = "", test.id = 1) {
     df %>%
         filter(grade == 13,
                str_detect(school_name,schoo),
-               subgroup_id %in% standard.groups,
+               student_group_id %in% standard.groups,
                
-               # Subgroup_ID == "1",
+               # student_group_id == "1",
                test_id == test.id, # ELA 
                type_id %in% c(9,10),
                !is.na(percentage_standard_met_and_above),
-               !str_detect(subgroup, " - "),
-               !str_detect(subgroup, "Declined")
+               !str_detect(student_group, " - "),
+               !str_detect(student_group, "Declined")
         ) %>%
-        mutate(subgroup.n = paste0(subgroup," (",students_tested,")" ))  %>%
+        mutate(student_group.n = paste0(student_group," (",total_students_tested_with_scores,")" ))  %>%
         lollipop(percentage_standard_met_and_above,
-                 subgroup.n,
+                 student_group.n,
                  "sea green") +
         # theme(panel.grid.major.x = element_line(color = "dark grey",
         #                                         size = 0.5,
@@ -638,7 +600,7 @@ schools <- caaspp.mry %>%
 
 for (i in schools) {
     for (j in test.list) {
-        lolli.subgroups.charter(caaspp.cast.mry, i, j)
+        lolli.subgroups.charter(caaspp.mry, i, j)
     }
 }
 
@@ -653,7 +615,7 @@ county.graph.w.charter <- function(df = caaspp.mry, test.id) {
     
     df %>%
         filter(grade == 13,
-               subgroup_id == "1",
+               student_group_id == "1",
                test_id == test.id, # ELA 
                entity_type %in% c("District","Direct Funded Charter School","Locally Funded Charter School"),
                !is.na(percentage_standard_met_and_above)
@@ -662,7 +624,7 @@ county.graph.w.charter <- function(df = caaspp.mry, test.id) {
                                     str_detect(entity_type,"harter") ~ school_name),
                bar_kular = case_when(entity_type == "District" ~ "steelblue",
                                     str_detect(entity_type,"harter") ~ "orange"))  %>%
-        mutate(lea_name.n = paste0(lea_name," (",students_tested,")" ))  %>%
+        mutate(lea_name.n = paste0(lea_name," (",total_students_tested_with_scores,")" ))  %>%
         
         
                 ggplot2::ggplot( aes( y = percentage_standard_met_and_above/100,
@@ -716,7 +678,7 @@ lolli.subgroups.school.feeder8 <- function(dist = "", schoo = "", test.id = 1) {
                str_detect(District_Name,dist),
                str_detect(School_Name,schoo),
                
-               # Subgroup_ID == "1",
+               # student_group_id == "1",
                Test_Id == test.id, # ELA 
                # Entity_Type == "School",
                !is.na(Percentage_Standard_Met_and_Above),
@@ -766,25 +728,25 @@ lolli.schools <- function(df, dist, test.id = 1, kular = "seagreen") {
     df %>%
         filter(grade == 13,
                str_detect(district_name,dist),
-               subgroup_id == "1",
+               student_group_id == "1",
                test_id == test.id, # ELA 
     #           entity_type == "School",
                !is.na(percentage_standard_met_and_above)
         )%>%
         mutate(school_name = if_else(is.na(school_name),district_name,school_name)) %>%
-        mutate(name.n = paste0(school_name," (",students_tested ,")")) %>%
+        mutate(name.n = paste0(school_name," (",total_students_tested_with_scores ,")")) %>%
         lollipop(percentage_standard_met_and_above,
                  name.n,
                 kular) +
         labs(x = "",
              y = "",
              color ="",
-             title = paste0("CAASPP ", test.name ," Rates Meeting or Exceeding Standards \n",dist," by School"),
+             title = paste0("CAASPP ", yr.curr, " ", test.name ," Rates Meeting or Exceeding Standards \n",dist," by School"),
              caption = source.link
         ) 
 
 ggsave(here("figs", paste0(dist, " ", test.name,  " Rates by School ",  Sys.Date(),".png" )),
-       width = 6, height = 4)
+       width = 8, height = 4.5)
 
     
 }
@@ -813,7 +775,7 @@ lolli.schools(caaspp.cast.mry, "Monterey County Office of Ed", 17)
 for (i in test.list) {
     for (j in districts) {
         
-        lolli.schools(caaspp.cast.mry, j, i)
+        lolli.schools(caaspp.mry, j, i)
         
     }
 
@@ -834,13 +796,13 @@ lolli.schools.charters <- function(df,  test.id = 1, kular = "seagreen") {
     df %>%
         filter(grade == 13,
                type_id %in% c(9,10),
-                   subgroup_id == "1",
+                   student_group_id == "1",
                test_id == test.id, # ELA 
                #           entity_type == "School",
                !is.na(percentage_standard_met_and_above)
         ) %>%
         mutate(school_name = if_else(is.na(school_name),district_name,school_name)) %>%
-        mutate(school_name.n = paste0(school_name," (",students_tested,")" ))  %>%
+        mutate(school_name.n = paste0(school_name," (",total_students_tested_with_scores,")" ))  %>%
         
         lollipop(percentage_standard_met_and_above,
                  school_name.n,
@@ -876,8 +838,8 @@ caaspp.mry.prior <- tbl(con, "CAASPP") %>%
            # DistrictCode == "10272",
            test_year == yr.prior) %>%
     collect() %>%
-    mutate(subgroup_id = as.character(subgroup_id)) %>%
-    left_join_codebook("CAASPP", "subgroup_id") %>%
+    mutate(student_group_id = as.character(student_group_id)) %>%
+    left_join_codebook("CAASPP", "student_group_id") %>%
     rename(subgroup = definition) %>%
     left_join(ent2, by = join_by(county_code, district_code, school_code)) %>%
     mutate(type_id = as.character(type_id)) %>%
@@ -893,7 +855,7 @@ caaspp.mry.prior <- tbl(con, "CAASPP") %>%
 caaspp.long <- caaspp.mry %>%
     bind_rows(caaspp.mry.prior) %>%
     filter(Grade == 13,
-                      Subgroup_ID == "1",
+                      student_group_id == "1",
                       Test_Id == 2, # ELA 
                       School_Code == "0000000",
                       # !is.na(Percentage_Standard_Met_and_Above)
@@ -941,7 +903,7 @@ ggplot(data = caaspp.long, aes(x = Test_Year, y = Percentage_Standard_Met_and_Ab
 caaspp.long <- caaspp.mry %>%
     bind_rows(caaspp.mry.prior, cast.mry) %>%
     filter(grade == 13,
-           subgroup_id == "1",
+           student_group_id == "1",
            entity_type == "District",
            test_id == 2, # Math 
       #     school_code == "0000000",
@@ -986,7 +948,7 @@ caaspp.long2 <- caaspp.long %>%
 #     caaspp.long <- caaspp.mry %>%
 #         bind_rows(caaspp.mry.prior) %>%
 #         filter(grade == 13,
-#                subgroup_id == "1",
+#                student_group_id == "1",
 #                entity_type == "District",
 #      #          test_id == 1, # ELA 
 #                #     school_code == "0000000",
@@ -1076,6 +1038,8 @@ caaspp.county.comp <- tbl(con, "CAASPP") %>%
            test_year %in% c(yr.prior,yr.curr)) %>%
     collect() %>%
     left_join(ent2) %>%
+  rename(student_group_id = subgroup_id) %>%
+  
     clean.caaspp()
     
 
@@ -1088,7 +1052,7 @@ caaspp.county.comp  %>%
 
 cast  %>%
     filter(# Type_ID == 5,
-        subgroup_id == 1,
+        student_group_id == 1,
         grade == 13,
         # County_Code == "27",
         district_code == "00000",
@@ -1135,9 +1099,9 @@ caaspp.mry %>%
     bind_rows(caaspp.mry.prior) %>%
 #    cast.mry %>%
     filter(grade == 13,
-          # Subgroup_ID == "1",
-          subgroup_id %in%  standard.groups,
-  #        subgroup_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
+          # student_group_id == "1",
+          student_group_id %in%  standard.groups,
+  #        student_group_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
           entity_type == "County",
           !is.na(percentage_standard_met_and_above)
     ) %>%
@@ -1151,9 +1115,9 @@ biggest.change <- # caaspp.mry %>%
   #  bind_rows(caaspp.mry.prior) %>%
     cast.mry %>%
     filter(grade == 13,
-           # Subgroup_ID == "1",
-           subgroup_id %in%  standard.groups,
-           #        subgroup_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
+           # student_group_id == "1",
+           student_group_id %in%  standard.groups,
+           #        student_group_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
            entity_type == "County",
            !is.na(percentage_standard_met_and_above)
     ) %>% 
@@ -1169,9 +1133,9 @@ imp.comp <- caaspp.mry %>%
     bind_rows(caaspp.imp, cast.mry, cast.imp) %>%
     filter(grade == 13,
            test_year == yr.curr,
-           # Subgroup_ID == "1",
-           subgroup_id %in%  standard.groups,
-           #        subgroup_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
+           # student_group_id == "1",
+           student_group_id %in%  standard.groups,
+           #        student_group_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
            entity_type == "County",
            !is.na(percentage_standard_met_and_above)
     ) %>% 
@@ -1187,14 +1151,14 @@ imp.comp <- caaspp.mry %>%
 
 # Simple County Growth
 
-caaspp.mry %>%
-    bind_rows(caaspp.mry.prior, cast.mry) %>%
+caaspp.cast.mry %>%
     
     filter(grade == 13,
-           subgroup_id == "1",
-           test_year %in% c(yr.curr,yr.prior),
-          # subgroup_id %in%  standard.groups,
-           #        subgroup_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
+           student_group_id == "1",
+                test_year >= "2023",
+           #     test_year %in% c(yr.curr,yr.prior),
+          # student_group_id %in%  standard.groups,
+           #        student_group_id %notin% c(190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
            entity_type == "County",
            !is.na(percentage_standard_met_and_above)
     ) %>%
@@ -1211,7 +1175,7 @@ caaspp.mry %>%
     mcoe_theme + 
     scale_y_continuous(labels = scales::percent) +
 #    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-    labs(title = paste0("Monterey County Rates Meeting or Exceeding Improvements in 2024"),
+    labs(title = paste0("Monterey County Rates Meeting or Exceeding Improvements in 2025"),
       #   subtitle = paste0("Grey is ",yr.prior," and ",kular," is ",yr.curr),
          y = "Percentage Met or Exceeded",
          x = "",
@@ -1220,7 +1184,7 @@ caaspp.mry %>%
 
 
 
-ggsave(here("figs", paste0("Monterey County Rates Meeting or Exceeding Improvements in 2024 ",  Sys.Date(),".png" )),
+ggsave(here("figs", paste0("Monterey County Rates Meeting or Exceeding Improvements in 2025 ",  Sys.Date(),".png" )),
        width = 8, height = 6)
 
 
@@ -1263,7 +1227,7 @@ caaspp.mry %>%
     bind_rows(caaspp.mry.prior, cast.mry) %>%
     
     filter(grade == 13,
-           subgroup_id == "1",
+           student_group_id == "1",
            test_year %in% c(yr.curr,yr.prior),
            entity_type == "District",
            str_detect(district_name, "North Monterey County"),
@@ -1290,30 +1254,30 @@ dist.hold <- caaspp.mry %>%
     filter(grade == 13,
            entity_type == "District",
            str_detect(district_name, dist),
-        #   Subgroup_ID == "1",
+        #   student_group_id == "1",
            test_id == testy, # Math 
        #    School_Code == "0000000",
             !is.na(percentage_standard_met_and_above),
-       subgroup_id %notin% c(121, 190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),
-       subgroup_id %in% c(1,7,8,180,160,250, 31, 128, 74, 75, 77, 78, 80, 76, 79, 144, 28, 240, 52 )
+       student_group_id %notin% c(121, 190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),
+       student_group_id %in% c(1,7,8,180,160,250, 31, 128, 74, 75, 77, 78, 80, 76, 79, 144, 28, 240, 52 )
        
           ) 
 
 
 tabyl.set <- dist.hold %>%
-    tabyl(subgroup_id) %>%
+    tabyl(student_group_id) %>%
     filter(n != 2)
 
 tabyl.set
 
 purge.list <- tabyl.set  %>%
-    select(subgroup_id)  %>%
+    select(student_group_id)  %>%
     unlist()
 
 purge.list
 
   dist.hold %>%
-      filter(subgroup_id %notin% tabyl.set$subgroup_id)  %>%
+      filter(student_group_id %notin% tabyl.set$student_group_id)  %>%
       mutate(ranker = ifelse(test_year == yr.curr, percentage_standard_met_and_above, NA))  %>%
       compare.years(subgroup, testy, dist, kular)
 
@@ -1352,13 +1316,13 @@ for (i in 1:2) {
 caaspp.mry %>%
     bind_rows(caaspp.mry.prior) %>%
     filter(Grade == 13,
-           # Subgroup_ID == "1",
-           Subgroup_ID %notin% c(121, 190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
+           # student_group_id == "1",
+           student_group_id %notin% c(121, 190, 200, 201, 202, 203, 204, 205, 206, 207, 220, 221, 222, 223, 224, 225, 226, 227, 250, 251, 252),  # Removing the 250-252 because did not exist in 2022
            Entity_Type == "District",
            !is.na(Percentage_Standard_Met_and_Above),
            str_detect(District_Name, "Chualar")
     ) %>%
-    tabyl(Subgroup_ID)
+    tabyl(student_group_id)
 
 ### Three Year Facet -----
 
@@ -1370,8 +1334,8 @@ caaspp.three.year <- tbl(con, "CAASPP") %>%
            type_id %in% c(3,4,5)
            )%>%
     collect() %>%
-    mutate(subgroup_id = as.character(subgroup_id)) %>%
-    left_join_codebook("CAASPP", "subgroup_id") %>%
+    mutate(student_group_id = as.character(student_group_id)) %>%
+    left_join_codebook("CAASPP", "student_group_id") %>%
     rename(subgroup = definition) %>%
     left_join(ent2) %>%
     mutate(type_id = as.character(type_id)) %>%
@@ -1383,7 +1347,7 @@ caaspp.three.year <- tbl(con, "CAASPP") %>%
 
 
 temp <- caaspp.three.year %>%
-    filter(subgroup_id %in% c(74,75,76,77,78,79,80),
+    filter(student_group_id %in% c(74,75,76,77,78,79,80),
            grade == 13,
            test_id == 1) %>%
   #  mutate(definition = fct_relevel(definition, "Kindergarten", after = 0 )) %>%
@@ -1404,7 +1368,7 @@ temp <- caaspp.three.year %>%
 ### Grades by EL ----
 
 caaspp.mry %>%
-    filter(Subgroup_ID %in% c(1,160),
+    filter(student_group_id %in% c(1,160),
            Entity_Type == "County",
            Test_Id == 1
            ) %>%
@@ -1457,7 +1421,7 @@ temp  %>%
 # ELA by Grade --- 
 caaspp.ela.3.5 <- tbl(con, "CAASPP") %>% 
     filter(# Type_ID == 5,
-        Subgroup_ID == 1,
+        student_group_id == 1,
         Grade %in% c(3,4,5),
          County_Code == "27",
      #   District_Code == "00000",
@@ -1624,7 +1588,7 @@ over.time <- function(df, test.id, dist.name, heading) {
 
 sa.long <- df %>%
     filter(grade == 13,
-           subgroup_id == "1",
+           student_group_id == "1",
            test_id == test.id, # ELA 
            school_code == "0000000"
     ) 
@@ -1696,9 +1660,9 @@ over.time(caaspp.san.antonio,
 mcoe <- caaspp.mry %>%
     filter(str_detect(district_name, "Office"),
            grade == 13,
-           subgroup_id == 1,
+           student_group_id == 1,
            test_year == 2024) %>%
-    select(ends_with("code"), ends_with("name"), test_id, students_with_scores ,subgroup_id, subgroup, students_tested, caaspp_reported_enrollment, percentage_standard_met_and_above)
+    select(ends_with("code"), ends_with("name"), test_id, students_with_scores ,student_group_id, subgroup, total_students_tested_with_scores, caaspp_reported_enrollment, percentage_standard_met_and_above)
 
 
 
@@ -1710,7 +1674,7 @@ caaspp.mry.hist %>%
   filter(
     test_year >= 2023,
     district_code == "00000",
-    subgroup_id %in% standard.groups,
+    student_group_id %in% standard.groups,
     test_id == 2,
     grade == 13
   ) |>
