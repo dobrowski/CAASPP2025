@@ -176,6 +176,15 @@ caaspp.mry <- caaspp.ca |>
   ) # %>%
 #  clean.caaspp()
 
+#### ELPAC --------
+
+elpac.ca <- vroom(
+  here("data", "sa_elpac2025_all_csv_v1.txt"),
+  .name_repair = ~ janitor::make_clean_names(., case = "snake"),
+  delim = "^"
+)
+
+
 ### District List ----
 
 districts <- c(
@@ -290,10 +299,10 @@ caaspp.mry.hist <- tbl(con, "CAASPP") %>%
   filter(
     county_code == "27",
     # DistrictCode == "10272",
-    #     test_year >= yr.prior
+    test_year >= yr.prior
   ) %>%
   collect() %>%
-  rename(student_group_id = subgroup_id) %>%
+  # rename(student_group_id = subgroup_id) %>%
   clean.caaspp()
 
 

@@ -158,23 +158,33 @@ ggplot(
 
 #####. BAr bell ----
 
-change.barbell <- function(df, group_col) {
+# Helper plotting function: draws a “barbell” change chart between two year columns (2024 vs 2025)
+
+change.barbell <- function(df, group_col, ordered.sort = TRUE) {
   df |>
     pivot_wider(
-      id_cols = {{ group_col }},
-      names_from = test_year,
+      id_cols = {{ group_col }}, # grouping variable passed tidily
+      names_from = test_year, # becomes columns like `2024`, `2025`
       values_from = percentage_standard_met_and_above
     ) %>%
+    # Compute change and a label with +/− sign
     mutate(
       change = round2(`2025` - `2024`, digits = 1),
       labl = if_else(change > 0, paste0("+", change), paste0(change))
     ) %>%
-    mutate({{ group_col }} := fct_reorder({{ group_col }}, `2025`)) |>
+    # Order groups by 2025 value for cleaner sorting on the y-axis
+    {
+      if (ordered.sort) {
+        mutate(., {{ group_col }} := fct_reorder({{ group_col }}, `2025`))
+      } else {
+        .
+      }
+    } |>
     #  mutate(subgroup = factor(subgroup, levels = sort(unique(subgroup), decreasing = TRUE)))
     # mutate(subgroup = factor(subgroup, levels = sort((`2024`), decreasing = TRUE)))
 
     ggplot(aes(y = {{ group_col }})) +
-    # connecting segment
+    # Draw connecting segment from 2024 to 2025 with an arrow showing direction
     geom_segment(
       aes(x = `2024`, xend = `2025`, yend = {{ group_col }}),
       linewidth = 1.2,
@@ -185,7 +195,7 @@ change.barbell <- function(df, group_col) {
         length = unit(0.1, "inches")
       )
     ) +
-    # endpoints
+    # Endpoints for each year, colored to match legend/title styling
     geom_point(aes(x = `2024`), color = "#fed98e", size = 3) +
     geom_point(aes(x = `2025`), color = "#fe9929", size = 3) +
     geom_text(
@@ -193,13 +203,16 @@ change.barbell <- function(df, group_col) {
       nudge_y = 0.5,
       color = "grey70"
     ) +
-    mcoe_theme
+    lims(x = c(0, NA)) +
+    mcoe_theme() +
+    labs(y = "")
 }
 
 
 # County student groups
 
-caaspp.cast.mry %>%
+caaspp.mry.hist |>
+  # caaspp.cast.mry %>%
   filter(
     #       test_year >= 2023,
     entity_type == "County",
@@ -208,7 +221,8 @@ caaspp.cast.mry %>%
     test_id == 2,
     grade == 13
   ) |>
-  change.barbell(student_group) +
+  change.barbell(student_group, ordered.sort = TRUE) +
+  # Title uses HTML to color year tokens
   labs(
     title = "Monterey County change in Math CAASPP between <span style='color:#fed98e;'>2024</span> and <span style='color:#fe9929;'>2025</span>",
     subtitle = "Student Groups Percentage Met or Exceeded",
@@ -217,6 +231,7 @@ caaspp.cast.mry %>%
   theme(
     plot.title = element_markdown(size = 16)
   ) +
+  # Allow geoms/labels to extend past the plotting panel (e.g., right-edge labels)
   coord_cartesian(clip = "off")
 
 
@@ -561,7 +576,8 @@ ggsave(
 
 ##### District Barbells -----
 
-district.change <- caaspp.cast.mry %>%
+# Build a district-level working dataset
+district.change <- caaspp.mry.hist %>%
   filter(
     # type_id == 5,
     # student_group_id == 1,
@@ -582,15 +598,18 @@ district.change <- caaspp.cast.mry %>%
   )
 
 
+# For each district/test/student_group, count how many yearly rows exist
+# (used to drop groups that only have a single year and thus cannot show change).
 change.count <- district.change |>
   group_by(district_name, test_id, student_group) |>
   count()
 
+# Join counts and keep only groups with at least two years (n != 1)
 district.change <- district.change |>
   left_join(change.count) |>
   filter(n != 1)
 
-
+# Create a simple vector of distinct district names to iterate over
 dist.list <- district.change |>
   select(district_name) |>
   na.omit() |>
@@ -598,8 +617,9 @@ dist.list <- district.change |>
   unlist()
 
 
+# Loop over districts, then over assessments (1 = ELA, 2 = Math; 17 handled in case_match)
 for (dist in dist.list) {
-  print(dist)
+  print(dist) # progress log to console
 
   for (test in c(1, 2)) {
     print(test)
@@ -611,12 +631,12 @@ for (dist in dist.list) {
       change.barbell(student_group) +
       labs(
         title = paste0(
-          dist,
-          " Change in ",
+          #        dist,
+          "Change in ",
           test.name,
           " CAASPP between <span style='color:#fed98e;'>2024</span> and <span style='color:#fe9929;'>2025</span>"
         ),
-        subtitle = "Student Groups Percentage Met or Exceeded",
+        subtitle = paste0(dist, " - Percentage Met or Exceeded"),
         x = "Percentage Met or Exceeded",
         #    caption = "* denotes counties with enrollment less than 60,000 students (Class 3)"
       ) +
@@ -638,7 +658,7 @@ for (dist in dist.list) {
 
 #### Change Schools in a District ----
 
-district.schools.change <- caaspp.cast.mry %>%
+district.schools.change <- caaspp.mry.hist %>%
   filter(
     # type_id == 5,
     student_group_id == 1,
@@ -648,10 +668,10 @@ district.schools.change <- caaspp.cast.mry %>%
     test_year >= yr.prior,
     entity_type %in%
       c(
-        "School"
+        "School",
         # "District"
-        #"Direct Funded Charter School",
-        #"Locally Funded Charter School"
+        "Direct Funded Charter School",
+        "Locally Funded Charter School"
       ),
     #       district_code == "00000",
     # student_group_id %in% standard.groups,
@@ -689,12 +709,12 @@ for (dist in dist.list) {
       change.barbell(school_name) +
       labs(
         title = paste0(
-          dist,
+          #        dist,
           " Change in ",
           test.name,
           " CAASPP between <span style='color:#fed98e;'>2024</span> and <span style='color:#fe9929;'>2025</span>"
         ),
-        subtitle = "School Percentage Met or Exceeded",
+        subtitle = paste0(dist, " - School Percentage Met or Exceeded"),
         x = "Percentage Met or Exceeded",
         #    caption = "* denotes counties with enrollment less than 60,000 students (Class 3)"
       ) +
@@ -712,3 +732,335 @@ for (dist in dist.list) {
     )
   }
 }
+
+
+### Student groups in a school -------
+
+schools.studentgroup.change <- caaspp.mry.hist %>%
+  filter(
+    # type_id == 5,
+    # student_group_id == 1,
+    grade == 13,
+    # County_Code == "27",
+    # DistrictCode == "10272",
+    test_year >= yr.prior,
+    entity_type %in%
+      c(
+        "School",
+        # "District"
+        "Direct Funded Charter School",
+        "Locally Funded Charter School"
+      ),
+    #       district_code == "00000",
+    # student_group_id %in% standard.groups,
+    #  test_id %in% c(1,2),
+    !is.na(percentage_standard_met_and_above),
+    !str_detect(school_name, "Alisal Virtual")
+  )
+
+
+school.studentgroup.count <- schools.studentgroup.change |>
+  group_by(district_name, test_id, school_name, student_group) |>
+  count()
+
+schools.studentgroup.change <- schools.studentgroup.change |>
+  left_join(school.studentgroup.count) |>
+  filter(n != 1)
+
+
+dist.list <- schools.studentgroup.change |>
+  select(district_name) |>
+  na.omit() |>
+  distinct() |>
+  unlist()
+
+# dist.list <- dist.list[29]
+
+for (dist in dist.list) {
+  print(dist)
+
+  schools <- schools.studentgroup.change |>
+    filter(str_detect(dist, district_name)) |>
+    select(school_name) |>
+    na.omit() |>
+    distinct() |>
+    unlist()
+
+  for (i in schools) {
+    print(i)
+
+    for (test in c(1, 2)) {
+      print(test)
+
+      test.name <- case_match(test, 1 ~ "ELA", 2 ~ "Math", 17 ~ "Science")
+
+      schools.studentgroup.change |>
+        filter(
+          test_id == test,
+          district_name == dist,
+          school_name == i,
+          student_group_id %in% standard.groups
+        ) |>
+        change.barbell(student_group) +
+        labs(
+          title = paste0(
+            #       dist,
+            " Change in ",
+            test.name,
+            " CAASPP between <span style='color:#fed98e;'>2024</span> and <span style='color:#fe9929;'>2025</span>"
+          ),
+          subtitle = paste0(dist, " - ", i, " - Percentage Met or Exceeded"),
+          x = "Percentage Met or Exceeded",
+          #    caption = "* denotes counties with enrollment less than 60,000 students (Class 3)"
+        ) +
+        theme(
+          plot.title = element_markdown(size = 16),
+          axis.text.y = element_markdown()
+        ) +
+        coord_cartesian(clip = "off")
+
+      #fmt: skip
+      ggsave(
+      here(   "figs", dist,  paste0(dist, " - " , i, " CAASPP ",  test.name, " Change between 2024 and 2025 ", Sys.Date(),".png" )  ),
+      width = 8,
+      height = 4.5
+    )
+    }
+  }
+}
+
+
+# Barbells for change by grade level by school
+
+schools.grade.change <- caaspp.mry.hist %>%
+  filter(
+    # type_id == 5,
+    student_group_id == 1,
+    grade != 13,
+    # County_Code == "27",
+    # DistrictCode == "10272",
+    test_year >= yr.prior,
+    entity_type %in%
+      c(
+        "School",
+        # "District"
+        "Direct Funded Charter School",
+        "Locally Funded Charter School"
+      ),
+    #       district_code == "00000",
+    # student_group_id %in% standard.groups,
+    #  test_id %in% c(1,2),
+    !is.na(percentage_standard_met_and_above)
+  ) |>
+  mutate(grade = factor(grade))
+
+
+schools.grade.count <- schools.grade.change |>
+  group_by(district_name, test_id, school_name, grade) |>
+  count()
+
+schools.grade.change <- schools.grade.change |>
+  left_join(schools.grade.count) |>
+  filter(n != 1)
+
+
+dist.list <- schools.grade.change |>
+  select(district_name) |>
+  na.omit() |>
+  distinct() |>
+  unlist()
+
+dist.list <- dist.list[23:28]
+
+
+for (dist in dist.list) {
+  print(dist)
+
+  schools <- schools.grade.change |>
+    filter(str_detect(dist, district_name)) |>
+    select(school_name) |>
+    na.omit() |>
+    distinct() |>
+    unlist()
+
+  for (i in schools) {
+    print(i)
+
+    for (test in c(1, 2)) {
+      print(test)
+
+      test.name <- case_match(test, 1 ~ "ELA", 2 ~ "Math", 17 ~ "Science")
+
+      schools.grade.change |>
+        filter(
+          test_id == test,
+          district_name == dist,
+          school_name == i,
+          # student_group_id %in% standard.groups
+        ) |>
+        change.barbell(grade, ordered.sort = FALSE) +
+        labs(
+          title = paste0(
+            #       dist,
+            " Change in ",
+            test.name,
+            " CAASPP between <span style='color:#fed98e;'>2024</span> and <span style='color:#fe9929;'>2025</span>"
+          ),
+          subtitle = paste0(dist, " - ", i, " - Percentage Met or Exceeded"),
+          x = "Percentage Met or Exceeded",
+          #    caption = "* denotes counties with enrollment less than 60,000 students (Class 3)"
+        ) +
+        theme(
+          plot.title = element_markdown(size = 16),
+          axis.text.y = element_markdown()
+        ) +
+        coord_cartesian(clip = "off")
+
+      #fmt: skip
+      ggsave(
+        here(   "figs", dist,  paste0(dist, " - " , i, " CAASPP by Grade ",  test.name, " Change between 2024 and 2025 ", Sys.Date(),".png" )  ),
+        width = 8,
+        height = 4.5
+      )
+    }
+  }
+}
+
+
+#### Summary tables ------
+
+district.schools.change2 <- district.schools.change |>
+  pivot_wider(
+    id_cols = c(district_name, school_name, test_id), # grouping variable passed tidily
+    names_from = test_year, # becomes columns like `2024`, `2025`
+    values_from = percentage_standard_met_and_above
+  ) %>%
+  # Compute change and a label with +/− sign
+  mutate(
+    change = round2(`2025` - `2024`, digits = 1),
+    labl = if_else(change > 0, paste0("+", change), paste0(change))
+  ) |>
+  filter(test_id == 2) |>
+  arrange(desc(change))
+
+
+district.change2 <- district.change |>
+  filter(student_group_id == 1) |> #128, 160
+  pivot_wider(
+    id_cols = c(district_name, test_id), # grouping variable passed tidily
+    names_from = test_year, # becomes columns like `2024`, `2025`
+    values_from = percentage_standard_met_and_above
+  ) %>%
+  # Compute change and a label with +/− sign
+  mutate(
+    change = round2(`2025` - `2024`, digits = 1),
+    labl = if_else(change > 0, paste0("+", change), paste0(change))
+  ) |>
+  #  filter(test_id == 2) |>
+  filter(str_detect(
+    district_name,
+    "Greenfield|King|South|Peninsul|Salinas Union|Ardo|North|Soledad|Gonzales"
+  ))
+arrange(test_id, desc(change))
+
+
+### Function for top change ----
+
+district.change <- caaspp.cast.mry %>%
+  filter(
+    # type_id == 5,
+    # student_group_id == 1,
+    grade == 13,
+    # County_Code == "27",
+    # DistrictCode == "10272",
+    test_year >= yr.prior,
+    entity_type %in%
+      c(
+        "County"
+        # "District"
+        #"Direct Funded Charter School",
+        #"Locally Funded Charter School"
+      ),
+    #       district_code == "00000",
+    student_group_id %in% standard.groups,
+    #  test_id %in% c(1,2),
+    !is.na(percentage_standard_met_and_above)
+  )
+
+
+# For each district/test/student_group, count how many yearly rows exist
+# (used to drop groups that only have a single year and thus cannot show change).
+change.count <- district.change |>
+  group_by(test_id, student_group) |>
+  count()
+
+# Join counts and keep only groups with at least two years (n != 1)
+district.change <- district.change |>
+  left_join(change.count) |>
+  filter(n != 1)
+
+
+district.change2 <- district.change |>
+  # filter(student_group_id == 31) |> #128, 160
+  pivot_wider(
+    id_cols = c(student_group, test_id), # grouping variable passed tidily
+    names_from = test_year, # becomes columns like `2024`, `2025`
+    values_from = percentage_standard_met_and_above
+  ) %>%
+  # Compute change and a label with +/− sign
+  mutate(
+    change = round2(`2025` - `2024`, digits = 1),
+    labl = if_else(change > 0, paste0("+", change), paste0(change))
+  ) |>
+  #  filter(test_id == 2) |>
+  arrange(desc(change))
+
+
+district.change <- caaspp.cast.mry %>%
+  filter(
+    # type_id == 5,
+    student_group_id == 1,
+    # grade == 13,
+    # County_Code == "27",
+    # DistrictCode == "10272",
+    test_year >= yr.prior,
+    entity_type %in%
+      c(
+        "County"
+        # "District"
+        #"Direct Funded Charter School",
+        #"Locally Funded Charter School"
+      ),
+    #       district_code == "00000",
+    student_group_id %in% standard.groups,
+    #  test_id %in% c(1,2),
+    !is.na(percentage_standard_met_and_above)
+  )
+
+
+# For each district/test/student_group, count how many yearly rows exist
+# (used to drop groups that only have a single year and thus cannot show change).
+change.count <- district.change |>
+  group_by(test_id, grade) |>
+  count()
+
+# Join counts and keep only groups with at least two years (n != 1)
+district.change <- district.change |>
+  left_join(change.count) |>
+  filter(n != 1)
+
+
+district.change2 <- district.change |>
+  # filter(student_group_id == 31) |> #128, 160
+  pivot_wider(
+    id_cols = c(grade, test_id), # grouping variable passed tidily
+    names_from = test_year, # becomes columns like `2024`, `2025`
+    values_from = percentage_standard_met_and_above
+  ) %>%
+  # Compute change and a label with +/− sign
+  mutate(
+    change = round2(`2025` - `2024`, digits = 1),
+    labl = if_else(change > 0, paste0("+", change), paste0(change))
+  ) |>
+  #  filter(test_id == 2) |>
+  arrange(desc(change))

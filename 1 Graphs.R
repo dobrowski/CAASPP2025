@@ -1503,41 +1503,92 @@ simple.change <- function(df, tit) {
     scale_y_continuous(labels = scales::percent) +
     #    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
     labs(
-      title = paste0(tit, " Rates Meeting or Exceeding Improvements in 2024"),
+      title = paste0(tit, " changes between ", yr.prior, " and ", yr.curr),
+      subtitle = "Percentage Meeting or Exceeding",
       #   subtitle = paste0("Grey is ",yr.prior," and ",kular," is ",yr.curr),
-      y = "Percentage Met or Exceeded",
+      y = "Percentage Meeting or Exceeding",
       x = "",
       caption = source.link
     )
 
-  ggsave(
-    here(
-      "figs",
-      paste0(
-        tit,
-        " Rates Meeting or Exceeding Improvements in 2024 ",
-        Sys.Date(),
-        ".png"
-      )
-    ),
-    width = 8,
-    height = 6
-  )
+  # ggsave(
+  #   here(
+  #     "figs",
+  #     tit,
+  #     paste0(
+  #       tit,
+  #       " changes between ",
+  #       yr.prior,
+  #       " and ",
+  #       yr.curr,
+  #       Sys.Date(),
+  #       ".png"
+  #     )
+  #   ),
+  #   width = 8,
+  #   height = 4.5
+  # )
 }
 
 
-caaspp.mry %>%
-  bind_rows(caaspp.mry.prior, cast.mry) %>%
-
+caaspp.cast.mry %>%
   filter(
     grade == 13,
     student_group_id == "1",
     test_year %in% c(yr.curr, yr.prior),
     entity_type == "District",
-    str_detect(district_name, "North Monterey County"),
+    str_detect(district_name, "Alisal"),
     !is.na(percentage_standard_met_and_above)
   ) %>%
-  simple.change("North Monterey County")
+  simple.change("Alisal")
+
+
+library(gganimate)
+
+anime <- caaspp.cast.mry %>%
+  filter(
+    grade == 13,
+    student_group_id == "1",
+    test_year %in% c(yr.curr, yr.prior),
+    entity_type == "District",
+    #   str_detect(district_name, "Alisal"),
+    !is.na(percentage_standard_met_and_above)
+  ) %>%
+  simple.change("Alisal") +
+  transition_states((district_name), transition_length = 2, state_length = 4) +
+  enter_grow() +
+  exit_fade() +
+  labs(
+    title = 'Now showing {closest_state}',
+    caption = 'Frame {frame} of {nframes}'
+  )
+
+animate(anime, nframes = 400, duration = 45)
+
+
+anim_save("all districts sample.gif")
+
+anim_save("alisal sample.gif")
+
+
+dist.list <- caaspp.cast.mry |>
+  select(district_name) |>
+  na.omit() |>
+  distinct() |>
+  unlist()
+
+for (dist in dist.list) {
+  caaspp.cast.mry %>%
+    filter(
+      grade == 13,
+      student_group_id == "1",
+      test_year %in% c(yr.curr, yr.prior),
+      entity_type == "District",
+      str_detect(district_name, dist),
+      !is.na(percentage_standard_met_and_above)
+    ) %>%
+    simple.change(dist)
+}
 
 
 ###
@@ -2135,7 +2186,7 @@ caaspp.mry.hist %>%
     grade == 13
   ) |>
   pivot_wider(
-    id_cols = c(subgroup),
+    id_cols = c(student_group),
     names_from = test_year,
     values_from = percentage_standard_met_and_above
   ) %>%
@@ -2143,14 +2194,14 @@ caaspp.mry.hist %>%
     change = round2(`2024` - `2023`, digits = 1),
     labl = if_else(change > 0, paste0("+", change), paste0(change))
   ) %>%
-  mutate(subgroup = fct_reorder(subgroup, `2024`)) |>
+  mutate(student_group = fct_reorder(student_group, `2024`)) |>
   #  mutate(subgroup = factor(subgroup, levels = sort(unique(subgroup), decreasing = TRUE)))
   # mutate(subgroup = factor(subgroup, levels = sort((`2024`), decreasing = TRUE)))
 
-  ggplot(aes(y = subgroup)) +
+  ggplot(aes(y = student_group)) +
   # connecting segment
   geom_segment(
-    aes(x = `2023`, xend = `2024`, yend = subgroup),
+    aes(x = `2023`, xend = `2024`, yend = student_group),
     linewidth = 1.2,
     color = "grey70",
     arrow = arrow(
